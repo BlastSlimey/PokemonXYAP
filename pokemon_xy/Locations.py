@@ -1,8 +1,10 @@
 from typing import NamedTuple, Dict, Optional, List
 from BaseClasses import Location
 
+
 class PokemonYLocation(Location):
     game: str = "Pokemon X and Y"
+
 
 class LocationData(NamedTuple):
     code: int
@@ -11,6 +13,7 @@ class LocationData(NamedTuple):
     flag_id: Optional[int] = None
     requires: str = ""
     victory: bool = False
+
 
 LOCATION_ID_OFFSET = 200000
 

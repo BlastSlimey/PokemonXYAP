@@ -1,11 +1,13 @@
 from typing import NamedTuple, Dict, Optional
 
+
 class ItemData(NamedTuple):
     code: int
     category: str = "Item"
     progression: bool = False
     useful: bool = False
     trap: bool = False
+
 
 ITEM_ID_OFFSET = 200000
 

@@ -165,7 +165,6 @@ GYM_FLAG_BY_BADGE = {
 class PokemonXYClient(BizHawkClient):
     game         = "Pokemon X and Y"
     system       = ("N3DS", "3DS", "N3DS Extra RAM", "System Bus")
-    patch_suffix = (".appatch", ".apypatch", ".apxypatch", ".apworld")
 
     _received_index: int = 0
     _sent_locations: Set[int]
@@ -264,7 +263,7 @@ class PokemonXYClient(BizHawkClient):
 
         # Route game name to match server room registration
         server_game = getattr(ctx, "server_game", None) or getattr(ctx, "game", None)
-        if server_game in ["Pokemon X and Y", "Pokemon Y", "Pokemon X"]:
+        if server_game == "Pokemon X and Y":
             ctx.game = server_game
         else:
             ctx.game = self.game
@@ -275,19 +274,7 @@ class PokemonXYClient(BizHawkClient):
         return True
 
     async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
-        try:
-            from .Locations import location_table
-        except Exception:
-            try:
-                from worlds.pokemon_y.Locations import location_table
-            except Exception:
-                try:
-                    from pokemon_y.Locations import location_table
-                except Exception:
-                    try:
-                        from pokemon_xy.Locations import location_table
-                    except Exception:
-                        location_table = {}
+        from .Locations import location_table
 
         # 0. Sync received badges from AP to prevent false location checks
         if ctx.items_received:
@@ -309,6 +296,7 @@ class PokemonXYClient(BizHawkClient):
                      and "Badge" not in data.category]
 
         checked = []
+        flag_bytes = b''
         if flag_locs:
             try:
                 results = await bizhawk.read(ctx.bizhawk_ctx, [(EVENT_FLAGS_BASE, 375, MEMORY_DOMAIN)])
@@ -347,8 +335,13 @@ class PokemonXYClient(BizHawkClient):
         # An all-zero flag block is perfectly normal at the title screen or before
         # a save is loaded, so this only complains once it has persisted long
         # enough that the player is certainly in game. Warns once, not every poll.
+        #
+        # Slimey note: Checking for `if flag_bytes` only evaluates to `True` if
+        # its length is not zero. The variable is set to an empty bytes object at
+        # the beginning and then to a non-empty bytes object when the flags were
+        # successfully read.
         # ----------------------------------------------------------------
-        if 'flag_bytes' in locals():
+        if flag_bytes:
             if any(flag_bytes):
                 self._empty_flag_polls = 0
             else:
@@ -369,7 +362,7 @@ class PokemonXYClient(BizHawkClient):
         # ----------------------------------------------------------------
         # 1d. Cleared-flag checks, and roadblock enforcement
         # ----------------------------------------------------------------
-        if 'flag_bytes' in locals():
+        if flag_bytes:
             try:
                 prev_flags = self._prev_flag_bytes
 
@@ -653,7 +646,7 @@ class PokemonXYClient(BizHawkClient):
             byte_offset = flag_goal // 8
             bit = flag_goal % 8
             goal_set = False
-            if 'flag_bytes' in locals() and byte_offset < len(flag_bytes):
+            if flag_bytes and byte_offset < len(flag_bytes):
                 goal_set = bool((flag_bytes[byte_offset] >> bit) & 1)
             else:
                 res = await bizhawk.read(ctx.bizhawk_ctx, [(EVENT_FLAGS_BASE + byte_offset, 1, MEMORY_DOMAIN)])
@@ -792,15 +785,3 @@ class PokemonXYClient(BizHawkClient):
         except Exception as e:
             logger.warning(f"[PokémonXY] Error giving bag item 0x{game_item_id:04X}: {e}")
             return False
-
-
-class PokemonYClient(PokemonXYClient):
-    game = "Pokemon Y"
-    system = ("N3DS", "3DS", "N3DS Extra RAM", "System Bus")
-    game_watcher = PokemonXYClient.game_watcher
-
-
-class PokemonXClient(PokemonXYClient):
-    game = "Pokemon X"
-    system = ("N3DS", "3DS", "N3DS Extra RAM", "System Bus")
-    game_watcher = PokemonXYClient.game_watcher

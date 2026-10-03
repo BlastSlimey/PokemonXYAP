@@ -5,15 +5,16 @@ from .Locations import location_table
 if TYPE_CHECKING:
     from . import PokemonXYWorld
 
+
 def count_badges(state: CollectionState, player: int) -> int:
-    badges = ["Bug Badge", "Cliff Badge", "Rumble Badge", "Plant Badge",
-              "Voltage Badge", "Fairy Badge", "Psychic Badge", "Iceberg Badge"]
-    return sum(1 for b in badges if state.has(b, player))
+    return state.count_from_list_unique(["Bug Badge", "Cliff Badge", "Rumble Badge", "Plant Badge",
+                                         "Voltage Badge", "Fairy Badge", "Psychic Badge", "Iceberg Badge"], player)
+
 
 def has_all_badges(state: CollectionState, player: int) -> bool:
-    badges = ["Bug Badge", "Cliff Badge", "Rumble Badge", "Plant Badge",
-              "Voltage Badge", "Fairy Badge", "Psychic Badge", "Iceberg Badge"]
-    return all(state.has(b, player) for b in badges)
+    return state.has_all(["Bug Badge", "Cliff Badge", "Rumble Badge", "Plant Badge",
+                          "Voltage Badge", "Fairy Badge", "Psychic Badge", "Iceberg Badge"], player)
+
 
 def set_rules(world: "PokemonXYWorld", player: int) -> None:
     # 1. Regional Entrance Rules (Require specific overworld Gym Badges)
@@ -115,10 +116,7 @@ def set_rules(world: "PokemonXYWorld", player: int) -> None:
     # When the option is off, hidden items are in logic from the start; when it
     # is on, they need the Dowsing Machine first. If include_hidden_items is off
     # there are no hidden locations to gate, so this loop simply finds nothing.
-    req_dowsing = getattr(world.options, "require_dowsing_machine", False)
-    if hasattr(req_dowsing, "value"): req_dowsing = bool(req_dowsing.value)
-
-    if req_dowsing:
+    if world.options.require_dowsing_machine:
         for loc in multiworld.get_locations(player):
             loc_data = location_table.get(loc.name)
             if loc_data and "HIDDEN ITEM" in loc_data.category:

@@ -1,25 +1,25 @@
-import os
-import sys
-import subprocess
 from typing import List, Dict, Any
 from worlds.AutoWorld import World, WebWorld
-from BaseClasses import Region, Entrance, Location, Item, Tutorial, ItemClassification
-from .Options import PokemonXYOptions, pokemon_y_options
+from BaseClasses import Location, Item, Tutorial, ItemClassification
+from .Options import PokemonXYOptions
 from .Items import item_table, ItemData, ITEM_ID_OFFSET
 from .Locations import location_table, LOCATION_ID_OFFSET
 from .Regions import create_regions
 from .Rules import set_rules
 
-from .Client import PokemonXYClient, PokemonYClient, PokemonXClient
+from .Client import PokemonXYClient
 
 ITEM_NAME_TO_ID = {name: data.code for name, data in item_table.items() if data.code is not None}
 LOCATION_NAME_TO_ID = {name: data.code for name, data in location_table.items() if data.code is not None}
 
+
 class PokemonXYLocation(Location):
     game: str = "Pokemon X and Y"
 
+
 class PokemonXYItem(Item):
     game: str = "Pokemon X and Y"
+
 
 class PokemonXYWeb(WebWorld):
     options_page = PokemonXYOptions
@@ -32,6 +32,7 @@ class PokemonXYWeb(WebWorld):
         ["Author"]
     )]
 
+
 class PokemonXYWorld(World):
     """
     Pokémon X and Y are Generation VI Pokémon games set in the Kalos region.
@@ -41,7 +42,6 @@ class PokemonXYWorld(World):
 
     options_dataclass = PokemonXYOptions
     options: PokemonXYOptions
-    option_definitions = pokemon_y_options
 
     topology_present = True
 
@@ -52,8 +52,6 @@ class PokemonXYWorld(World):
         create_regions(self, self.player)
 
     def create_items(self):
-        item_pool: List[Item] = []
-        
         progression_items: List[Item] = []
         useful_items: List[Item] = []
         filler_names: List[str] = []
@@ -102,7 +100,8 @@ class PokemonXYWorld(World):
 
     def fill_slot_data(self) -> Dict[str, Any]:
         include_hidden = getattr(self.options, "include_hidden_items", True)
-        if hasattr(include_hidden, "value"): include_hidden = bool(include_hidden.value)
+        if hasattr(include_hidden, "value"):
+            include_hidden = bool(include_hidden.value)
         return {
             "goal": "8 Badges + E4 + Champion",
             "include_hidden_items": include_hidden,
